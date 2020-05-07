@@ -1,7 +1,10 @@
 /* vim: set ai et ts=4 sw=4: */
 #ifndef __ST7735_H__
 #define __ST7735_H__
-
+#include "stm32f4xx_hal.h"
+#include "main.h"
+#include "cmsis_os.h"
+#include "semphr.h"
 #include "fonts.h"
 #include <stdbool.h>
 
@@ -15,7 +18,7 @@
 
 /*** Redefine if necessary ***/
 #define ST7735_SPI_PORT hspi3
-extern SPI_HandleTypeDef ST7735_SPI_PORT;
+
 
 #define ST7735_RES_Pin       GPIO_PIN_1 // PD1
 #define ST7735_RES_GPIO_Port GPIOD 		//GPIOD
@@ -45,33 +48,33 @@ extern SPI_HandleTypeDef ST7735_SPI_PORT;
 */
 
 // AliExpress/eBay 1.8" display, rotate left
-/*
+
 #define ST7735_IS_160X128 1
 #define ST7735_WIDTH  160
 #define ST7735_HEIGHT 128
 #define ST7735_XSTART 0
 #define ST7735_YSTART 0
 #define ST7735_ROTATION (ST7735_MADCTL_MX | ST7735_MADCTL_MV)
-*/
+
 
 // AliExpress/eBay 1.8" display, upside down
-/*
-#define ST7735_IS_160X128 1
-#define ST7735_WIDTH  128
-#define ST7735_HEIGHT 160
-#define ST7735_XSTART 0
-#define ST7735_YSTART 0
-#define ST7735_ROTATION (0)
-*/
+
+//#define ST7735_IS_160X128 1
+//#define ST7735_WIDTH  128
+//#define ST7735_HEIGHT 160
+//#define ST7735_XSTART 0
+//#define ST7735_YSTART 0
+//#define ST7735_ROTATION (0)
+
 
 // WaveShare ST7735S-based 1.8" display, default orientation
 
-#define ST7735_IS_160X128 1
-#define ST7735_WIDTH  128
-#define ST7735_HEIGHT 160
-#define ST7735_XSTART 0
-#define ST7735_YSTART 0
-#define ST7735_ROTATION (ST7735_MADCTL_MX | ST7735_MADCTL_MY | ST7735_MADCTL_RGB)
+//#define ST7735_IS_160X128 1
+//#define ST7735_WIDTH  128
+//#define ST7735_HEIGHT 160
+//#define ST7735_XSTART 0
+//#define ST7735_YSTART 0
+//#define ST7735_ROTATION (ST7735_MADCTL_MX | ST7735_MADCTL_MY | ST7735_MADCTL_RGB)
 
 
 // WaveShare ST7735S-based 1.8" display, rotate right
@@ -224,12 +227,14 @@ extern SPI_HandleTypeDef ST7735_SPI_PORT;
 
 // Color definitions
 #define	ST7735_BLACK   0x0000
-#define	ST7735_BLUE    0x001F
-#define	ST7735_RED     0xF800
+#define	ST7735_RED    0x001F
+#define	ST7735_BLUE     0xF800
 #define	ST7735_GREEN   0x07E0
-#define ST7735_CYAN    0x07FF
+//#define ST7735_CYAN    0x07FF
+#define ST7735_CYAN    0xFFE0
 #define ST7735_MAGENTA 0xF81F
-#define ST7735_YELLOW  0xFFE0
+//#define ST7735_YELLOW  0xFFE0
+#define ST7735_YELLOW  0x07FF
 #define ST7735_WHITE   0xFFFF
 #define ST7735_COLOR565(r, g, b) (((r & 0xF8) << 8) | ((g & 0xFC) << 3) | ((b & 0xF8) >> 3))
 

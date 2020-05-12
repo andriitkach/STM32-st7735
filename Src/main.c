@@ -209,46 +209,51 @@ static void MX_NVIC_Init(void);
 /* USER CODE BEGIN 0 */
 
 void vTaskDisplayTest(void * displayTestParam) {
-	uint32_t min_delay_ms = 500;
-	uint32_t max_delay_ms = 5000;
-	uint32_t min_delay_ticks = min_delay_ms / portTICK_PERIOD_MS;
-	uint32_t max_delay_ticks = max_delay_ms / portTICK_PERIOD_MS;
+	uint32_t delay_ms = 50;
+	uint32_t delay_ticks = delay_ms / portTICK_PERIOD_MS;
     ST7735_Init();
-    //uint16_t img_buf[128*128];
-    for(int i = 0; i < 128; i++) {
-    	for(int j = 0; j < 128; j++) {
-
-    		uint16_t pixel = test_img_128x128[i][j];
-    		test_img_128x128[i][j] = ((pixel & 0x1f00) >> 5) + ((pixel & 0x00F8) << 5) + (pixel & 0xE007);
-    	}
-    }
+    const uint8_t x_start = ST7735_WIDTH/2;
+    const uint8_t y_start = ST7735_HEIGHT/2;
 
 	while(1) {
-		ST7735_DrawImage(0, 0, 128, 128, test_img_128x128);
-		vTaskDelay(max_delay_ticks);
-		ST7735_FillScreen(ST7735_WHITE);
-		//ST7735_FillRectangle(ST7735,0, 10, 10, ST7735_BLACK);
-//		ST7735_FillScreen(ST7735_BLUE);
-//		ST7735_WriteString(1, 108, "ST7735_BLUE", Font_7x10, ST7735_BLACK, ST7735_BLUE);
-//		vTaskDelay(max_delay_ticks);
-//		ST7735_FillScreen(ST7735_RED);
-//		ST7735_WriteString(1, 108, "ST7735_RED", Font_7x10, ST7735_BLACK, ST7735_RED);
-//		vTaskDelay(max_delay_ticks);
-//		ST7735_FillScreen(ST7735_YELLOW);
-//		ST7735_WriteString(1, 108, "ST7735_YELLOW", Font_7x10, ST7735_BLACK, ST7735_YELLOW);
-//		vTaskDelay(max_delay_ticks);
-//
-//		ST7735_FillScreen(ST7735_CYAN);
-//		ST7735_WriteString(1, 108, "ST7735_CYAN", Font_7x10, ST7735_BLACK, ST7735_CYAN);
-//		vTaskDelay(max_delay_ticks);
-//		ST7735_FillScreen(ST7735_MAGENTA);
-//		ST7735_WriteString(1, 108, "ST7735_MAGENTA", Font_7x10, ST7735_BLACK, ST7735_MAGENTA);
-//		vTaskDelay(max_delay_ticks);
-//		ST7735_FillScreen(ST7735_GREEN);
-//		ST7735_WriteString(1, 108, "ST7735_GREEN", Font_7x10, ST7735_BLACK, ST7735_GREEN);
-//		vTaskDelay(max_delay_ticks);
+		ST7735_AddFill(ST7735_CYAN);
+		uint8_t y_end = 0;
+		uint8_t x_end = 0;
+		for(x_end = 0; x_end < ST7735_WIDTH; x_end+=3) {
+			ST7735_AddLine(x_start, y_start, x_end, y_end, 1, ST7735_BLACK);
+			vTaskDelay(delay_ticks);
+		}
+		x_end = ST7735_WIDTH - 1;
+		for(y_end = 0; y_end < ST7735_HEIGHT; y_end+=3) {
+			ST7735_AddLine(x_start, y_start, x_end, y_end, 1, ST7735_BLACK);
+			vTaskDelay(delay_ticks);
+		}
+		y_end = ST7735_HEIGHT - 1;
+		for(x_end = ST7735_WIDTH - 1; x_end < ST7735_WIDTH; x_end-=3) {
+			ST7735_AddLine(x_start, y_start, x_end, y_end, 1, ST7735_BLACK);
+			vTaskDelay(delay_ticks);
+		}
+		x_end = 0;
+		for(y_end = ST7735_HEIGHT - 1; y_end < ST7735_HEIGHT; y_end-=3) {
+			ST7735_AddLine(x_start, y_start, x_end, y_end, 1, ST7735_BLACK);
+			vTaskDelay(delay_ticks);
+		}
+		vTaskDelay(delay_ticks);
+		ST7735_AddFill(ST7735_BLACK);
+		for(int x = 0; x < ST7735_WIDTH; x+=2) {
+			ST7735_AddVerLine(x, 1, ST7735_YELLOW);
+			vTaskDelay(delay_ticks);
+			ST7735_AddVerLine(x, 1,  ST7735_BLACK);
+		}
+	}
+}
 
-
+void vTaskScreenRefresher(void * pRefresher) {
+	uint16_t refreshPeriod_ms = 50;
+	uint8_t refreshPeriod_ticks = refreshPeriod_ms / portTICK_PERIOD_MS;
+	while(1) {
+		ST7735_Refresh();
+		vTaskDelay(refreshPeriod_ticks);
 	}
 }
 
@@ -331,9 +336,17 @@ int main(void)
   xTaskCreate(
 		  vTaskDisplayTest,
 		  "DisplayTest",
-		  configMINIMAL_STACK_SIZE,
+		  (uint16_t)1024,
 		  NULL,
 		  2,
+		  NULL
+  );
+  xTaskCreate(
+		  vTaskScreenRefresher,
+		  "ScreenRefresher",
+		  (uint16_t)1024,
+		  NULL,
+		  20,
 		  NULL
   );
 

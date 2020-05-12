@@ -248,5 +248,11 @@ void ST7735_FillRectangle(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16
 void ST7735_FillScreen(uint16_t color);
 void ST7735_DrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint16_t* data);
 void ST7735_InvertColors(bool invert);
+void ST7735_Refresh(void);
+void ST7735_AddPixel(uint8_t x, uint8_t y, uint16_t color);
+void ST7735_AddHorLine(uint8_t y, uint8_t width, uint16_t color);
+void ST7735_AddVerLine(uint8_t y, uint8_t width, uint16_t color);
+void ST7735_AddFill(uint16_t color);
+void ST7735_AddLine(uint8_t x_start, uint8_t y_start, uint8_t x_end, uint8_t y_end, uint8_t width, uint16_t color);
 
 #endif // __ST7735_H__

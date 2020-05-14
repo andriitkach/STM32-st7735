@@ -39,6 +39,7 @@
 							<tool command="arm-atollic-eabi-gcc -c " commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG}${OUTPUT_PREFIX} ${OUTPUT} ${INPUTS}" id="com.atollic.truestudio.exe.debug.toolchain.gcc.1836874447" name="C Compiler" superClass="com.atollic.truestudio.exe.debug.toolchain.gcc">
 								<option id="com.atollic.truestudio.gcc.directories.select.330946435" name="Include path" superClass="com.atollic.truestudio.gcc.directories.select" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="../Inc" />
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/LIS302DL}&quot;" />
 									<listOptionValue builtIn="false" value="../Drivers/STM32F4xx_HAL_Driver/Inc" />
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/st7735}&quot;" />
 									<listOptionValue builtIn="false" value="/home/andrii/STM32SPI/Drivers/st7735" />

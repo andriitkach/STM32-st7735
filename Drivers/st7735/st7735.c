@@ -294,21 +294,46 @@ void ST7735_AddPixel(uint8_t x, uint8_t y, uint16_t color) {
 
 }
 
-void ST7735_AddHorLine(uint8_t y, uint8_t width, uint16_t color) {
+void ST7735_AddHorLine(uint8_t y, uint8_t x_start, uint8_t x_end, uint8_t width, uint16_t color, LineType_t type) {
 	if(y > ST7735_HEIGHT || y < 0) return;
 	uint16_t color__ = (color >> 8) + ((color & 0xFF) << 8);
-	xSemaphoreTake(sDisplaySPI, portMAX_DELAY);
-	for(int x = 0; x < ST7735_WIDTH; x++)
-		data_buf[y*ST7735_WIDTH + x] = color__;
-	xSemaphoreGive(sDisplaySPI);
+	if(type == SOLID) {
+		xSemaphoreTake(sDisplaySPI, portMAX_DELAY);
+		for(uint8_t x = x_start; x <= x_end; x++)
+			data_buf[y*ST7735_WIDTH + x] = color__;
+		xSemaphoreGive(sDisplaySPI);
+	} else {
+		xSemaphoreTake(sDisplaySPI, portMAX_DELAY);
+		for(uint8_t x = x_start; x <= x_end; x++)
+			if((x & 0x02) == 0) data_buf[y*ST7735_WIDTH + x] = color__;
+		xSemaphoreGive(sDisplaySPI);
+	}
 }
-void ST7735_AddVerLine(uint8_t x, uint8_t width, uint16_t color) {
+void ST7735_AddVerLine(uint8_t x, uint8_t y_start, uint8_t y_end, uint8_t width, uint16_t color, LineType_t type) {
 	if(x > ST7735_WIDTH || x < 0) return;
 	uint16_t color__ = (color >> 8) + ((color & 0xFF) << 8);
+	if(type == SOLID) {
+		xSemaphoreTake(sDisplaySPI, portMAX_DELAY);
+		for(int y = y_start; y <= y_end; y++)
+			data_buf[y*ST7735_WIDTH + x] = color__;
+		xSemaphoreGive(sDisplaySPI);
+	} else {
+		xSemaphoreTake(sDisplaySPI, portMAX_DELAY);
+		for(int y = y_start; y <= y_end; y++)
+			if((y & 0x02) == 0)data_buf[y*ST7735_WIDTH + x] = color__;
+		xSemaphoreGive(sDisplaySPI);
+	}
+}
+void ST7735_AddRectangle(uint8_t x_start, uint8_t y_start, uint8_t x_end, uint8_t y_end, uint16_t color) {
+	uint16_t color__ = (color >> 8) + ((color & 0xFF) << 8);
 	xSemaphoreTake(sDisplaySPI, portMAX_DELAY);
-	for(int y = 0; y < ST7735_HEIGHT; y++)
-		data_buf[y*ST7735_WIDTH + x] = color__;
+	for(int y = y_start; y <= y_end; y++) {
+		for(int x = x_start; x <= x_end; x++) {
+			data_buf[y*ST7735_WIDTH + x] = color__;
+		}
+	}
 	xSemaphoreGive(sDisplaySPI);
+
 }
 void ST7735_AddFill(uint16_t color) {
 	uint16_t color__ = (color >> 8) + ((color & 0xFF) << 8);
@@ -318,7 +343,7 @@ void ST7735_AddFill(uint16_t color) {
 	}
 	xSemaphoreGive(sDisplaySPI);
 }
-static void ST7735_AddLineLow(uint8_t x_start, uint8_t y_start, uint8_t x_end, uint8_t y_end, uint16_t color__) {
+static void ST7735_AddLineLow(uint8_t x_start, uint8_t y_start, uint8_t x_end, uint8_t y_end, uint16_t color__, LineType_t type) {
 
 	int dx = (int)x_end - (int)x_start;
 	int dy = (int)y_end - (int)y_start;
@@ -340,7 +365,7 @@ static void ST7735_AddLineLow(uint8_t x_start, uint8_t y_start, uint8_t x_end, u
 	}
 }
 
-static void ST7735_AddLineHigh(uint8_t x_start, uint8_t y_start, uint8_t x_end, uint8_t y_end, uint16_t color__) {
+static void ST7735_AddLineHigh(uint8_t x_start, uint8_t y_start, uint8_t x_end, uint8_t y_end, uint16_t color__, LineType_t type_) {
 	int dx = (int)x_end - (int)x_start;
 	int dy = (int)y_end - (int)y_start;
 	int xi = 1;
@@ -360,55 +385,102 @@ static void ST7735_AddLineHigh(uint8_t x_start, uint8_t y_start, uint8_t x_end, 
 
 	}
 }
-void ST7735_AddLine(uint8_t x_start, uint8_t y_start, uint8_t x_end, uint8_t y_end, uint8_t width, uint16_t color) {
+void ST7735_AddLine(uint8_t x_start, uint8_t y_start, uint8_t x_end, uint8_t y_end, uint8_t width, uint16_t color, LineType_t type) {
 	uint16_t color__ = (color >> 8) + ((color & 0xFF) << 8);
 	int abs_dx = x_start >= x_end ? x_start - x_end : x_end - x_start;
 	int abs_dy = y_start >= y_end ? y_start - y_end : y_end - y_start;
 	if(abs_dy < abs_dx) {
 		if(x_start > x_end)
-			ST7735_AddLineLow(x_end, y_end, x_start, y_start, color__);
+			ST7735_AddLineLow(x_end, y_end, x_start, y_start, color__, type);
 		else
-			ST7735_AddLineLow(x_start, y_start, x_end, y_end, color__);
+			ST7735_AddLineLow(x_start, y_start, x_end, y_end, color__, type);
 	} else {
 		if(y_start > y_end)
-			ST7735_AddLineHigh(x_end, y_end, x_start, y_start, color__);
+			ST7735_AddLineHigh(x_end, y_end, x_start, y_start, color__, type);
 		else
-			ST7735_AddLineHigh(x_start, y_start, x_end, y_end, color__);
+			ST7735_AddLineHigh(x_start, y_start, x_end, y_end, color__, type);
 	}
 
 }
 
 
-//void ST7735_AddLine(uint8_t x_start, uint8_t y_start, uint8_t x_end, uint8_t y_end, uint8_t width, uint16_t color) {
-//	if(y_start >= ST7735_HEIGHT || y_start < 0 || x_start >= ST7735_WIDTH || x_start < 0) return;
-//	if(y_end >= ST7735_HEIGHT || y_end < 0 || x_end >= ST7735_WIDTH || x_end < 0) return;
-//	uint16_t color__ = (color >> 8) + ((color & 0xFF) << 8);
-//	if(x_end < x_start && y_end <= y_start) {
-//		uint8_t a = x_start;
-//		x_start = x_end;
-//		x_end = a;
-//		uint8_t b = y_start;
-//		y_start = y_end;
-//		y_end = b;
-//	}
-//
-//	int dx, dy, D;
-//	uint8_t y = y_start;
-//	dx = x_end - x_start;
-//	dy = y_end - y_start;
-//	D = 2*dy - dx;
-//	xSemaphoreTake(sDisplaySPI, portMAX_DELAY);
-//	for(uint8_t x = x_start; x <= x_end; x++) {
-//		data_buf[y*ST7735_WIDTH + x] = color__;
-//		if(D > 0) {
-//			y++;
-//			D = D - 2*dx;
-//		}
-//		D = D + 2*dy;
-//
-//	}
-//	xSemaphoreGive(sDisplaySPI);
-//
-//
-//}
+static void ST7735_AddChar(uint16_t x, uint16_t y, char ch, FontDef font, uint16_t color__, uint16_t bgcolor__) {
+    uint32_t i, b, j;
+
+    //ST7735_SetAddressWindow(x, y, x+font.width-1, y+font.height-1);
+
+    for(i = 0; i < font.height; i++) {
+        b = font.data[(ch - 32) * font.height + i];
+        for(j = 0; j < font.width; j++) {
+            if((b << j) & 0x8000)  {
+            	data_buf[(y+i)*ST7735_WIDTH + x + j] = color__;
+            }
+        }
+    }
+}
+
+void ST7735_AddString(uint16_t x, uint16_t y, const char* str, FontDef font, uint16_t color, uint16_t bgcolor) {
+
+	uint16_t color__ = (color >> 8) + ((color & 0xFF) << 8);
+	uint16_t bgcolor__ = (bgcolor >> 8) + ((bgcolor & 0xFF) << 8);
+	xSemaphoreTake(sDisplaySPI, portMAX_DELAY);
+    while(*str) {
+        if(x + font.width >= ST7735_WIDTH) {
+            x = 0;
+            y += font.height;
+            if(y + font.height >= ST7735_HEIGHT) {
+                break;
+            }
+
+            if(*str == ' ') {
+                // skip spaces in the beginning of the new line
+                str++;
+                continue;
+            }
+        }
+
+        ST7735_AddChar(x, y, *str, font, color__, bgcolor__);
+        x += font.width;
+        str++;
+    }
+    xSemaphoreGive(sDisplaySPI);
+}
+
+void pushChannelData(int8_t newData, ChannelData_t * dataStruct) {
+	dataStruct->values[dataStruct->head] = newData;
+	if(dataStruct->cnt < 127) dataStruct->cnt++;
+	dataStruct->head++;
+	dataStruct->head &= 0x7F;
+}
+
+void printChannelData(uint8_t x_start, uint8_t y_start, ChannelData_t * dataStruct, uint16_t color) {
+
+	if(dataStruct->cnt == 0) return;
+	uint16_t color_norm__ = (color >> 8) + ((color & 0xFF) << 8);
+	uint16_t color_clip__ = ((ST7735_RED >> 8) + ((ST7735_RED & 0xFF) << 8));
+	int i = dataStruct->head - 1;
+	int cnt = 0;
+	xSemaphoreTake(sDisplaySPI, portMAX_DELAY);
+	while(cnt < dataStruct->cnt) {
+		uint16_t color__;
+		if(dataStruct->values[i] >= (int8_t)71) {
+			dataStruct->values[i] = (int8_t)71;
+			color__ = color_clip__;
+		} else if(dataStruct->values[i] <= (int8_t)(-70)) {
+			dataStruct->values[i] = (int8_t)(-70);
+			color__ = color_clip__;
+		}
+		else
+			color__ = color_norm__;
+		uint8_t y = y_start + (dataStruct->values[i] >> 2);
+		data_buf[y*ST7735_WIDTH + x_start + cnt] = color__;//dataStruct.values[i];
+		i--;
+		i &= 0x7F;
+		cnt++;
+	}
+	xSemaphoreGive(sDisplaySPI);
+
+}
+
+
 

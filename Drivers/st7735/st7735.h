@@ -237,6 +237,18 @@
 #define ST7735_YELLOW  0x07FF
 #define ST7735_WHITE   0xFFFF
 #define ST7735_COLOR565(r, g, b) (((r & 0xF8) << 8) | ((g & 0xFC) << 3) | ((b & 0xF8) >> 3))
+#define ST7735_GRAY 	ST7735_COLOR565(95, 95, 95)
+
+typedef enum {
+	SOLID,
+	DOTTED
+} LineType_t;
+
+typedef struct {
+	int8_t values[128];
+	uint8_t head;
+	uint8_t cnt;
+} ChannelData_t;
 
 // call before initializing any SPI devices
 void ST7735_Unselect();
@@ -250,9 +262,13 @@ void ST7735_DrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint
 void ST7735_InvertColors(bool invert);
 void ST7735_Refresh(void);
 void ST7735_AddPixel(uint8_t x, uint8_t y, uint16_t color);
-void ST7735_AddHorLine(uint8_t y, uint8_t width, uint16_t color);
-void ST7735_AddVerLine(uint8_t y, uint8_t width, uint16_t color);
+void ST7735_AddHorLine(uint8_t y, uint8_t x_start, uint8_t x_end, uint8_t width, uint16_t color, LineType_t type);
+void ST7735_AddVerLine(uint8_t x, uint8_t y_start, uint8_t y_end, uint8_t width, uint16_t color, LineType_t type);
 void ST7735_AddFill(uint16_t color);
-void ST7735_AddLine(uint8_t x_start, uint8_t y_start, uint8_t x_end, uint8_t y_end, uint8_t width, uint16_t color);
+void ST7735_AddLine(uint8_t x_start, uint8_t y_start, uint8_t x_end, uint8_t y_end, uint8_t width, uint16_t color, LineType_t type);
+void ST7735_AddString(uint16_t x, uint16_t y, const char* str, FontDef font, uint16_t color, uint16_t bgcolor);
+void ST7735_AddRectangle(uint8_t x_start, uint8_t y_start, uint8_t x_end, uint8_t y_end, uint16_t color);
+void pushChannelData(int8_t newData, ChannelData_t * dataStruct);
+void printChannelData(uint8_t x, uint8_t y, ChannelData_t * dataStruct, uint16_t color);
 
 #endif // __ST7735_H__
